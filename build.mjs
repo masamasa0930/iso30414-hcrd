@@ -3,13 +3,16 @@
 // 使い方: node build.mjs "パスワード"
 import {readFileSync, writeFileSync} from 'node:fs';
 import {webcrypto as crypto} from 'node:crypto';
+import {createHash} from 'node:crypto';
 
 const pwd = process.argv[2];
 if (!pwd) { console.error('使い方: node build.mjs "パスワード"'); process.exit(1); }
 
 const html = readFileSync(new URL('./app.html', import.meta.url), 'utf8');
 const enc = new TextEncoder();
-const salt = crypto.getRandomValues(new Uint8Array(16));
+// ソルトはパスワード由来の固定値：アプリ更新では利用者の「記憶」を維持し、
+// パスワード変更時のみ全員の記憶を無効化する
+const salt = new Uint8Array(createHash('sha256').update('iso30414-hcrd|' + pwd).digest()).slice(0, 16);
 const iv = crypto.getRandomValues(new Uint8Array(12));
 const ITER = 310000;
 
